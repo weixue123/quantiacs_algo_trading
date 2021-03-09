@@ -33,8 +33,7 @@ def mac(close: pd.Series, slow_periods: int, fast_periods: int) -> pd.Series:
         else:
             return 0
 
-    return data.apply(lambda row: crossover(row["slow_sma"], row["fast_sma"], row["fast_sma_delta"]),
-                      axis=1)
+    return data.apply(lambda row: crossover(row["slow_sma"], row["fast_sma"], row["fast_sma_delta"]), axis=1)
 
 
 def rsi(close: pd.Series, lookback: int):
