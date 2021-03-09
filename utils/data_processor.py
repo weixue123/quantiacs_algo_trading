@@ -42,10 +42,10 @@ def _build_indicators_dataframe(ohclv_data: pd.DataFrame) -> pd.DataFrame:
     indicators = pd.DataFrame(index=ohclv_data.index)
 
     indicators["DAILY RETURNS"] = daily_returns(close=close)
-    indicators["SPREAD"] = spread(high=high, low=low)
+    indicators["SPREAD"] = daily_high_low_spread(high=high, low=low)
     indicators["VOLUME"] = volume
-    indicators["VOLATILITY"] = volatility(close=close, lookback=21)
-    indicators["MAC"] = mac(close=close, slow_periods=50, fast_periods=15)
-    indicators["RSI"] = rsi(close=close, lookback=14)
+    indicators["VOLATILITY"] = annualized_rolling_volatility(close=close, lookback=21)
+    indicators["MAC"] = moving_average_crossover(close=close, slow_periods=50, fast_periods=15)
+    indicators["RSI"] = relative_strength_index(close=close, lookback=14)
 
     return indicators.dropna()
