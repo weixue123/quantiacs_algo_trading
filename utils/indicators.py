@@ -1,23 +1,24 @@
 import numpy as np
 import pandas as pd
 
-__all__ = ["daily_returns", "spread", "volatility", "mac", "rsi"]
+__all__ = ["daily_returns", "daily_high_low_spread", "annualized_rolling_volatility", "moving_average_crossover",
+           "relative_strength_index"]
 
 
 def daily_returns(close: pd.Series) -> pd.Series:
     return close.pct_change()
 
 
-def spread(high: pd.Series, low: pd.Series) -> pd.Series:
+def daily_high_low_spread(high: pd.Series, low: pd.Series) -> pd.Series:
     return high - low
 
 
-def volatility(close: pd.Series, lookback: int) -> pd.Series:
+def annualized_rolling_volatility(close: pd.Series, lookback: int) -> pd.Series:
     vol = close.rolling(lookback).std(ddof=1)
     return vol * np.sqrt(252)
 
 
-def mac(close: pd.Series, slow_periods: int, fast_periods: int) -> pd.Series:
+def moving_average_crossover(close: pd.Series, slow_periods: int, fast_periods: int) -> pd.Series:
     data = pd.DataFrame(index=close.index)
 
     data["slow_sma"] = close.rolling(slow_periods).mean()
@@ -36,7 +37,7 @@ def mac(close: pd.Series, slow_periods: int, fast_periods: int) -> pd.Series:
     return data.apply(lambda row: crossover(row["slow_sma"], row["fast_sma"], row["fast_sma_delta"]), axis=1)
 
 
-def rsi(close: pd.Series, lookback: int):
+def relative_strength_index(close: pd.Series, lookback: int):
     returns = close.pct_change()
 
     assert lookback <= len(returns), f"Not enough rows to calculate RSI with lookback of {lookback} periods"
