@@ -4,11 +4,11 @@ import numpy as np
 
 from systems.settings import get_futures_list, get_settings
 
-"""
-Base trading system that simply longs every asset with equal weight.
-"""
 
 def myTradingSystem(settings) -> Tuple[np.ndarray, dict]:
+    """
+    Base trading system that simply longs every asset with equal weight.
+    """
     weights = []
     for asset in settings["markets"]:
         weights.append(0) if asset == "CASH" else weights.append(1)
