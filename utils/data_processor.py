@@ -25,7 +25,7 @@ def build_predictors_and_labels(ohclv_data: pd.DataFrame) -> Tuple[pd.DataFrame,
 
     predictors = _build_indicators_dataframe(ohclv_data=ohclv_data)
 
-    daily_returns_lagged = daily_returns(close=ohclv_data["close"]).shift(-1).dropna()
+    daily_returns_lagged = daily_returns(price=ohclv_data["close"]).shift(-1).dropna()
     labels = daily_returns_lagged.map(lambda returns: 1 if returns >= 0 else 0)
 
     return predictors, labels
@@ -41,11 +41,11 @@ def _build_indicators_dataframe(ohclv_data: pd.DataFrame) -> pd.DataFrame:
 
     indicators = pd.DataFrame(index=ohclv_data.index)
 
-    indicators["DAILY RETURNS"] = daily_returns(close=close)
+    indicators["DAILY RETURNS"] = daily_returns(price=close)
     indicators["SPREAD"] = daily_high_low_spread(high=high, low=low)
     indicators["VOLUME"] = volume
-    indicators["VOLATILITY"] = annualized_rolling_volatility(close=close, lookback=21)
-    indicators["MAC"] = moving_average_crossover(close=close, slow_periods=50, fast_periods=15)
-    indicators["RSI"] = relative_strength_index(close=close, lookback=14)
+    indicators["VOLATILITY"] = annualized_rolling_volatility(price=close, lookback=21)
+    indicators["MAC"] = moving_average_crossover(price=close, slow_periods=50, fast_periods=15)
+    indicators["RSI"] = relative_strength_index(price=close, lookback=14)
 
     return indicators.dropna()

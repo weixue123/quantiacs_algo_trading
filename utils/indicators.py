@@ -5,24 +5,24 @@ __all__ = ["daily_returns", "daily_high_low_spread", "annualized_rolling_volatil
            "relative_strength_index"]
 
 
-def daily_returns(close: pd.Series) -> pd.Series:
-    return close.pct_change()
+def daily_returns(price: pd.Series) -> pd.Series:
+    return price.pct_change()
 
 
 def daily_high_low_spread(high: pd.Series, low: pd.Series) -> pd.Series:
     return high - low
 
 
-def annualized_rolling_volatility(close: pd.Series, lookback: int) -> pd.Series:
-    vol = close.rolling(lookback).std(ddof=1)
+def annualized_rolling_volatility(price: pd.Series, lookback: int) -> pd.Series:
+    vol = price.rolling(lookback).std(ddof=1)
     return vol * np.sqrt(252)
 
 
-def moving_average_crossover(close: pd.Series, slow_periods: int, fast_periods: int) -> pd.Series:
-    data = pd.DataFrame(index=close.index)
+def moving_average_crossover(price: pd.Series, slow_periods: int, fast_periods: int) -> pd.Series:
+    data = pd.DataFrame(index=price.index)
 
-    data["slow_sma"] = close.rolling(slow_periods).mean()
-    data["fast_sma"] = close.rolling(fast_periods).mean()
+    data["slow_sma"] = price.rolling(slow_periods).mean()
+    data["fast_sma"] = price.rolling(fast_periods).mean()
     data["fast_sma_delta"] = data["fast_sma"].pct_change()
 
     # Returns 1 for golden cross, -1 for death cross, and 0 otherwise
@@ -37,8 +37,8 @@ def moving_average_crossover(close: pd.Series, slow_periods: int, fast_periods: 
     return data.apply(lambda row: crossover(row["slow_sma"], row["fast_sma"], row["fast_sma_delta"]), axis=1)
 
 
-def relative_strength_index(close: pd.Series, lookback: int):
-    returns = close.pct_change()
+def relative_strength_index(price: pd.Series, lookback: int):
+    returns = price.pct_change()
 
     assert lookback <= len(returns), f"Not enough rows to calculate RSI with lookback of {lookback} periods"
 
