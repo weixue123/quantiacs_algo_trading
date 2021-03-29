@@ -1,5 +1,4 @@
-from typing import Tuple
-
+import numpy as np
 import pandas as pd
 
 from data_processing.indicators import rolling_volatility, macd, rsi, atr
@@ -17,14 +16,36 @@ class DataProcessor:
         assert len(missing) == 0, f"{missing} columns not found in input futures price data."
         self.data = data
 
-    def get_predictors_and_labels(self) -> Tuple[pd.DataFrame, pd.Series]:
+    def build_predictors_and_labels(self) -> pd.DataFrame:
         """
-        Returns a predictor dataframe and a labels series.
+        Returns a complete dataframe with predictors and labels.
         """
-        if "LABELS" not in self.data.columns:
-            self.add_labels()
-        final = self.data.dropna()
-        return final.drop("LABELS", axis=1), final["LABELS"]
+        return (self
+                .add_macd()
+                .add_rsi()
+                .add_atr()
+                .add_daily_returns()
+                .add_rolling_volatility()
+                .add_lag_close(lag=1)
+                .add_lag_close(lag=2)
+                .add_labels()
+                .get_data()
+                .dropna())
+
+    def build_predictors(self) -> pd.DataFrame:
+        """
+        Returns a dataframe with predictors only.
+        """
+        return (self
+                .add_macd()
+                .add_rsi()
+                .add_atr()
+                .add_daily_returns()
+                .add_rolling_volatility()
+                .add_lag_close(lag=1)
+                .add_lag_close(lag=2)
+                .get_data()
+                .dropna())
 
     def add_labels(self):
         """
@@ -47,6 +68,8 @@ class DataProcessor:
                 labels.append(1)
             elif returns_next <= -0.5 * vol:
                 labels.append(-1)
+            elif np.isnan(returns_next):
+                labels.append(float("nan"))
             else:
                 labels.append(0)
 
@@ -79,4 +102,4 @@ class DataProcessor:
         return self
 
     def get_data(self):
-        return self.data
+        return self.data.round(6)
