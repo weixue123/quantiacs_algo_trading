@@ -6,7 +6,11 @@ import pandas as pd
 
 from models.lstm.lstm_model import LSTMModel
 from utils.data_processor import build_predictors_and_labels
-from systems.settings import get_settings
+from systems.settings import get_futures_list, get_settings
+
+"""
+Trading system that uses the LSTM model to predict change in price.
+"""
 
 
 def myTradingSystem(DATE: List[int], OPEN: np.ndarray, HIGH: np.ndarray, LOW: np.ndarray, CLOSE: np.ndarray,
@@ -52,9 +56,7 @@ def myTradingSystem(DATE: List[int], OPEN: np.ndarray, HIGH: np.ndarray, LOW: np
 def mySettings():
     settings = get_settings()
 
-    # Overwrites the list of futures
-    # Randomly choose 10 assets because backtesting on all 88 takes too long
-    futures_list = settings["markets"]
+    futures_list = get_futures_list(filter_insignificant_lag_1_acf=True)
     settings["markets"] = ["CASH", *random.sample(futures_list, 10)]
 
     settings["models"] = {asset: LSTMModel(time_step=5) for asset in futures_list}
