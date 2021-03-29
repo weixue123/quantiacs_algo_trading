@@ -1,8 +1,9 @@
-from typing import List
+from typing import List, Union
 
+import numpy as np
 import pandas as pd
 
-__all__ = ["get_futures_list", "get_settings"]
+__all__ = ["get_futures_list", "get_settings", "normalize_weights", "build_ohclv_dataframe"]
 
 
 def get_futures_list(filter_insignificant_lag_1_acf: bool = False) -> List[str]:
@@ -56,3 +57,36 @@ def get_settings(first_date: str = "20190123", last_date: str = "20210331"):
             'slippage': 0.05,
             'beginInSample': first_date,
             'endInSample': last_date}
+
+
+def normalize_weights(weights: Union[List[int], np.ndarray]) -> np.ndarray:
+    """
+    Helper function to normalize an input list or array of weights so that their sum is 1.
+    """
+    weights = np.array(weights)
+    assert len(weights.shape) == 1, "Weights should be a 1-D array."
+
+    total_weights = np.nansum(np.abs(weights))
+
+    # If total weights is zero, adjust the weights for cash (index 0) to 1; this avoids division by zero
+    if total_weights == 0:
+        weights[0] = 1
+        total_weights = 1
+
+    return weights / total_weights
+
+
+def build_ohclv_dataframe(DATE: List[int], OPEN: np.ndarray, HIGH: np.ndarray, LOW: np.ndarray, CLOSE: np.ndarray,
+                          VOL: np.ndarray, index: int):
+    """
+    Helper function to build a dataframe of open, high, low, close and volume data from the arrays given by
+    myTradingSystem
+    """
+    dates: List[pd.datetime] = list(map(lambda date_int: pd.to_datetime(date_int, format="%Y%m%d"), DATE))
+    ohclv_data = pd.DataFrame(index=dates)
+    ohclv_data["OPEN"] = OPEN[:, index]
+    ohclv_data["HIGH"] = HIGH[:, index]
+    ohclv_data["LOW"] = LOW[:, index]
+    ohclv_data["CLOSE"] = CLOSE[:, index]
+    ohclv_data["VOL"] = VOL[:, index]
+    return ohclv_data

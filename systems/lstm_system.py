@@ -1,11 +1,13 @@
-from typing import List, Tuple, Union
+import os
+import pickle
+from pathlib import Path
+from typing import List, Tuple
 
 import numpy as np
-import pandas as pd
 
 from data_processing.data_processor import DataProcessor
 from models.lstm.lstm_model import LSTMModel
-from systems.settings import get_futures_list, get_settings
+from systems.systems_util import get_settings, normalize_weights, build_ohclv_dataframe
 
 
 def myTradingSystem(DATE: List[int], OPEN: np.ndarray, HIGH: np.ndarray, LOW: np.ndarray, CLOSE: np.ndarray,
@@ -18,24 +20,15 @@ def myTradingSystem(DATE: List[int], OPEN: np.ndarray, HIGH: np.ndarray, LOW: np
 
     positions: List[int] = []
 
-    for index, asset in enumerate(settings["markets"]):
-        if asset == "CASH":
+    for index, ticker in enumerate(settings["markets"]):
+        if ticker == "CASH":
             positions.append(0)
             continue
 
+        print(f"Predicting for: {ticker}")
         ohclv_data = build_ohclv_dataframe(DATE, OPEN, HIGH, LOW, CLOSE, VOL, index)
-        data_processor = DataProcessor(data=ohclv_data)
-
-        model = settings["models"][asset]
-
-        if not model.is_trained():
-            print(f"Training model for: {asset}")
-            processed_data = data_processor.build_predictors_and_labels()
-            predictors, labels = processed_data.drop("LABELS", axis=1), processed_data["LABELS"]
-            model.build_and_train_model(predictors=predictors, labels=labels)
-
-        print(f"Predicting for: {asset}")
-        predictors = data_processor.build_predictors()
+        predictors = DataProcessor(data=ohclv_data).build_predictors()
+        model = settings["models"][ticker]
         prediction = model.predict_last(predictors=predictors)
         positions.append(prediction)
 
@@ -46,42 +39,22 @@ def myTradingSystem(DATE: List[int], OPEN: np.ndarray, HIGH: np.ndarray, LOW: np
 
 def mySettings():
     settings = get_settings()
-    futures_list = get_futures_list(filter_insignificant_lag_1_acf=True)
-    settings["markets"] = ["CASH", "F_ES"]
-    settings["models"] = {asset: LSTMModel(time_step=5) for asset in futures_list}
+    # futures_list = get_futures_list(filter_insignificant_lag_1_acf=True)
+    futures_list = ["F_AD", "F_ES"]
+    settings["markets"] = ["CASH", *futures_list]
+    settings["models"] = {ticker: load_model(ticker) for ticker in futures_list}
     return settings
 
 
-def build_ohclv_dataframe(DATE: List[int], OPEN: np.ndarray, HIGH: np.ndarray, LOW: np.ndarray, CLOSE: np.ndarray,
-                          VOL: np.ndarray, index: int):
+def load_model(ticker: str):
     """
-    Helper function to build a dataframe of open, high, low, close and volume data.
+    Helper function to load a trained model previously saved as a pickle.
     """
-    dates: List[pd.datetime] = list(map(lambda date_int: pd.to_datetime(date_int, format="%Y%m%d"), DATE))
-    ohclv_data = pd.DataFrame(index=dates)
-    ohclv_data["OPEN"] = OPEN[:, index]
-    ohclv_data["HIGH"] = HIGH[:, index]
-    ohclv_data["LOW"] = LOW[:, index]
-    ohclv_data["CLOSE"] = CLOSE[:, index]
-    ohclv_data["VOL"] = VOL[:, index]
-    return ohclv_data
-
-
-def normalize_weights(weights: Union[List[int], np.ndarray]) -> np.ndarray:
-    """
-    Helper function to normalize an input list or array of weights so that their sum is 1.
-    """
-    weights = np.array(weights)
-    assert len(weights.shape) == 1, "Weights should be a 1-D array."
-
-    total_weights = np.nansum(np.abs(weights))
-
-    # If total weights is zero, adjust the weights for cash (index 0) to 1; this avoids division by zero
-    if total_weights == 0:
-        weights[0] = 1
-        total_weights = 1
-
-    return weights / total_weights
+    storage_dir = Path(os.path.dirname(__file__)).parent / "models/lstm/serialized_models"
+    pickle_in = open(f"{storage_dir}/{ticker}.pickle", "rb")
+    model: LSTMModel = pickle.load(pickle_in)
+    assert model.is_trained(), f"Loaded model for future {ticker} is not trained."
+    return model
 
 
 if __name__ == '__main__':
