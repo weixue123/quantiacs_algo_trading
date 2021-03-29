@@ -2,7 +2,7 @@ from typing import Tuple
 
 import numpy as np
 
-from systems.settings import get_futures_list, get_settings
+from systems.systems_util import get_futures_list, get_settings
 
 
 def myTradingSystem(settings) -> Tuple[np.ndarray, dict]:
