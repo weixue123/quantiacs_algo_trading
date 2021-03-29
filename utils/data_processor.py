@@ -46,6 +46,6 @@ def _build_indicators_dataframe(ohclv_data: pd.DataFrame) -> pd.DataFrame:
     indicators["VOLUME"] = volume
     indicators["VOLATILITY"] = annualized_rolling_volatility(price=close, lookback=21)
     indicators["MAC"] = moving_average_crossover(price=close, slow_periods=50, fast_periods=15)
-    indicators["RSI"] = relative_strength_index(price=close, lookback=14)
+    indicators["RSI"] = rsi(price=close, lookback=14)
 
     return indicators.dropna()

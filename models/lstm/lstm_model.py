@@ -67,11 +67,14 @@ class LSTMModel:
         assert self.is_trained(), "The model has not been trained yet."
 
         predictors = predictors.iloc[-self.time_step:].to_numpy()
-        predictors = self.scaler.transform(predictors)
 
-        sample = predictors.reshape(1, predictors.shape[0], predictors.shape[1])
-        prediction = self.model.predict(sample)
-        return 1 if prediction[0][0] >= 0.5 else 0
+        try:
+            predictors = self.scaler.transform(predictors)
+            sample = predictors.reshape(1, predictors.shape[0], predictors.shape[1])
+            prediction = self.model.predict(sample)
+            return 1 if prediction[0][0] >= 0.5 else 0
+        except ValueError:
+            return 0
 
     def reset_model(self) -> None:
         self.model = Sequential()

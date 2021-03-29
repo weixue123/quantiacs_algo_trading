@@ -1,46 +1,41 @@
 import numpy as np
 import pandas as pd
 
-__all__ = ["daily_returns", "daily_high_low_spread", "annualized_rolling_volatility", "moving_average_crossover",
-           "relative_strength_index"]
+__all__ = ["ema", "macd", "rsi", "atr"]
 
 
-def daily_returns(price: pd.Series) -> pd.Series:
-    return price.pct_change()
+def ema(price: pd.Series, periods: int) -> pd.Series:
+    """
+    Given a series of price data, calculates the exponential moving average series.
+    """
+    # Set alpha to 2 / (N + 1), a commonly used value
+    alpha = 2 / (periods + 1)
+
+    # Obtain weights [a(1-a)^(N-1), ..., a(1-a)^2, a(1-a), a] and normalize them so their sum is 1
+    weights = [1, *np.cumprod([1 - alpha] * (periods - 1))][::-1]
+    weights = alpha * np.array(weights)
+    weights = weights / weights.sum()
+
+    return price.rolling(window=periods).apply(lambda s: np.dot(s, weights)).dropna()
 
 
-def daily_high_low_spread(high: pd.Series, low: pd.Series) -> pd.Series:
-    return high - low
+def macd(price: pd.Series, slow_periods: int = 26, fast_periods: int = 12) -> pd.Series:
+    """
+    Give a series of price data, calculates the moving average convergence divergence series.
+    """
+    slow_ema = ema(price, periods=slow_periods)
+    fast_ema = ema(price, periods=fast_periods)
+    output = fast_ema - slow_ema
+
+    output.name = "MACD"
+    return output
 
 
-def annualized_rolling_volatility(price: pd.Series, lookback: int) -> pd.Series:
-    vol = price.rolling(lookback).std(ddof=1)
-    return vol * np.sqrt(252)
-
-
-def moving_average_crossover(price: pd.Series, slow_periods: int, fast_periods: int) -> pd.Series:
-    data = pd.DataFrame(index=price.index)
-
-    data["slow_sma"] = price.rolling(slow_periods).mean()
-    data["fast_sma"] = price.rolling(fast_periods).mean()
-    data["fast_sma_delta"] = data["fast_sma"].pct_change()
-
-    # Returns 1 for golden cross, -1 for death cross, and 0 otherwise
-    def crossover(slow_sma: float, fast_sma: float, fast_sma_delta: float) -> int:
-        if fast_sma > slow_sma and fast_sma_delta > 0:
-            return 1
-        elif fast_sma < slow_sma and fast_sma_delta < 0:
-            return -1
-        else:
-            return 0
-
-    return data.apply(lambda row: crossover(row["slow_sma"], row["fast_sma"], row["fast_sma_delta"]), axis=1)
-
-
-def relative_strength_index(price: pd.Series, lookback: int):
+def rsi(price: pd.Series, lookback: int = 14) -> pd.Series:
+    """
+    Given a series of price data, calculates the relative strength index series.
+    """
     returns = price.pct_change()
-
-    assert lookback <= len(returns), f"Not enough rows to calculate RSI with lookback of {lookback} periods"
 
     # Set initial average gains and losses
     first_date = returns.index[lookback]
@@ -58,12 +53,33 @@ def relative_strength_index(price: pd.Series, lookback: int):
         average_losses[date] = (average_losses[-1] * (lookback - 1) - min(current_returns, 0)) / lookback
 
     # Compute RSI
-    result = pd.Series(index=average_gains.index, dtype=float)
-    for date in result.index:
+    output = pd.Series(index=average_gains.index, dtype=float)
+    for date in output.index:
         try:
             ratio = average_gains[date] / average_losses[date]
-            result[date] = 100 - 100 / (1 + ratio)
+            output[date] = 100 - 100 / (1 + ratio)
         except ZeroDivisionError:
-            result[date] = 0
+            output[date] = 0
 
-    return result
+    output.name = "RSI"
+    return output
+
+
+def atr(close: pd.Series, high: pd.Series, low: pd.Series, periods: int = 14) -> pd.Series:
+    """
+    Given the series of an asset's close, high, and low data, calculates the average true range series.
+    """
+    close.name = "CLOSE"
+    high.name = "HIGH"
+    low.name = "LOW"
+    data = pd.concat([close, high, low], axis=1)
+
+    data["CLOSE PREVIOUS"] = data["CLOSE"].shift(1)
+    true_range = pd.concat([data["HIGH"] - data["LOW"],
+                            abs(data["HIGH"] - data["CLOSE PREVIOUS"]),
+                            abs(data["LOW"] - data["CLOSE PREVIOUS"])
+                            ], axis=1).max(axis=1)
+    average_true_range = true_range.rolling(periods).mean()
+
+    average_true_range.name = "ATR"
+    return average_true_range
