@@ -1,9 +1,9 @@
-from models.lstm.training_util import get_training_data, get_cross_validation_results, build_optimized_model, save_model
+from models.lstm.training_util import get_training_data, get_cross_validation_results, build_optimized_model, \
+    save_model, is_model_trained_and_saved
 from systems.systems_util import get_futures_list
 
-futures_list = get_futures_list(filter_insignificant_lag_1_acf=True)
 
-for ticker in futures_list:
+def train_and_save_model(ticker: str) -> None:
     print(f"Training model for {ticker}")
 
     predictors, labels = get_training_data(ticker)
@@ -12,3 +12,15 @@ for ticker in futures_list:
     save_model(ticker, model)
 
     print(f"Trained and saved model for {ticker}!\n")
+
+
+def execute():
+    for ticker in get_futures_list(filter_insignificant_lag_1_acf=True):
+        if not is_model_trained_and_saved(ticker=ticker):
+            train_and_save_model(ticker=ticker)
+        else:
+            print(f"Model for {ticker} is already trained and saved!")
+
+
+if __name__ == '__main__':
+    execute()

@@ -94,7 +94,7 @@ class DataProcessor:
         return self
 
     def add_rolling_volatility(self, lookback: int = 22):
-        self.data["ROLLING VOLATILITY"] = rolling_volatility(price=self.data["CLOSE"].pct_change(), lookback=lookback)
+        self.data["ROLLING VOLATILITY"] = rolling_volatility(price=self.data["CLOSE"], lookback=lookback)
         return self
 
     def add_lag_close(self, lag: int):

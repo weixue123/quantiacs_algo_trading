@@ -9,7 +9,8 @@ from sklearn.model_selection import train_test_split
 from models.lstm.lstm_model import LSTMModel
 from utils.data_loader import load_processed_data
 
-__all__ = ["get_training_data", "get_cross_validation_results", "build_optimized_model", "save_model"]
+__all__ = ["get_training_data", "get_cross_validation_results", "build_optimized_model", "save_model", "load_model",
+           "is_model_trained_and_saved"]
 
 
 def get_training_data(ticker: str) -> Tuple[pd.DataFrame, pd.Series]:
@@ -31,7 +32,7 @@ def get_training_data(ticker: str) -> Tuple[pd.DataFrame, pd.Series]:
 def get_cross_validation_results(predictors: pd.DataFrame, labels: pd.Series) -> pd.DataFrame():
     """
     Carries out cross-validaiton. Returns a dataframe that records the cross-validation
-    accuracies along with the hyperparameters combintaions that produced them.
+    accuracies along with the hyperparameters combinations that produced them.
 
     The output dataframe will have the following four columns:
         1. CV Accuracy
@@ -107,3 +108,24 @@ def save_model(ticker: str, model: LSTMModel):
     pickle_out = open(f"{storage_dir}/{ticker}.pickle", "wb")
     pickle.dump(model, pickle_out)
     pickle_out.close()
+
+
+def load_model(ticker: str) -> LSTMModel:
+    """
+    Helper function to load a trained model previously saved as a pickle.
+    """
+    print(f"Loading model for {ticker}")
+    storage_dir = Path(os.path.dirname(__file__)) / "serialized_models"
+    pickle_in = open(f"{storage_dir}/{ticker}.pickle", "rb")
+    model: LSTMModel = pickle.load(pickle_in)
+    assert model.is_trained(), f"Loaded model for future {ticker} is not trained."
+    return model
+
+
+def is_model_trained_and_saved(ticker: str) -> bool:
+    storage_dir = Path(os.path.dirname(__file__)) / "serialized_models"
+    if os.path.exists(storage_dir / f"{ticker}.pickle"):
+        model = load_model(ticker)
+        return model.is_trained()
+
+    return False

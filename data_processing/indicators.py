@@ -8,7 +8,7 @@ def rolling_volatility(price: pd.Series, lookback: int = 22):
     """
     Given a series of price data, calculates the rolling daily volatility series.
     """
-    return price.rolling(lookback).std(ddof=1)
+    return price.pct_change().rolling(lookback).std(ddof=1)
 
 
 def ema(price: pd.Series, periods: int) -> pd.Series:
