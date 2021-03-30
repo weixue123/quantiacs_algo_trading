@@ -1,13 +1,10 @@
-import os
-import pickle
-from pathlib import Path
 from typing import List, Tuple
 
 import numpy as np
 
 from data_processing.data_processor import DataProcessor
-from models.lstm.lstm_model import LSTMModel
-from systems.systems_util import get_settings, normalize_weights, build_ohclv_dataframe
+from models.lstm.training_util import load_model
+from systems.systems_util import get_futures_list, get_settings, normalize_weights, build_ohclv_dataframe
 
 
 def myTradingSystem(DATE: List[int], OPEN: np.ndarray, HIGH: np.ndarray, LOW: np.ndarray, CLOSE: np.ndarray,
@@ -39,22 +36,10 @@ def myTradingSystem(DATE: List[int], OPEN: np.ndarray, HIGH: np.ndarray, LOW: np
 
 def mySettings():
     settings = get_settings()
-    # futures_list = get_futures_list(filter_insignificant_lag_1_acf=True)
-    futures_list = ["F_AD", "F_ES"]
+    futures_list = get_futures_list(filter_insignificant_lag_1_acf=True)
     settings["markets"] = ["CASH", *futures_list]
     settings["models"] = {ticker: load_model(ticker) for ticker in futures_list}
     return settings
-
-
-def load_model(ticker: str):
-    """
-    Helper function to load a trained model previously saved as a pickle.
-    """
-    storage_dir = Path(os.path.dirname(__file__)).parent / "models/lstm/serialized_models"
-    pickle_in = open(f"{storage_dir}/{ticker}.pickle", "rb")
-    model: LSTMModel = pickle.load(pickle_in)
-    assert model.is_trained(), f"Loaded model for future {ticker} is not trained."
-    return model
 
 
 if __name__ == '__main__':
