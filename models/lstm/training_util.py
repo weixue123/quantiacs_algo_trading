@@ -54,7 +54,7 @@ def get_cross_validation_results(predictors: pd.DataFrame, labels: pd.Series) ->
                 # Train with 0%-25%, test on 25%-50%
                 X_train, X_remaining, y_train, y_remaining = train_test_split(predictors, labels, test_size=0.75,
                                                                               shuffle=False)
-                X_test, _, y_test, _ = train_test_split(X_remaining, y_remaining, test_size=0.33, shuffle=False)
+                X_test, _, y_test, _ = train_test_split(X_remaining, y_remaining, test_size=0.66, shuffle=False)
                 model = LSTMModel(time_step=time_step)
                 model.build_and_train_model(X_train, y_train, epochs=epochs, hidden_layers=hidden_layers)
                 accuracy_sum += model.evaluate_accuracy(X_test, y_test)
@@ -62,7 +62,7 @@ def get_cross_validation_results(predictors: pd.DataFrame, labels: pd.Series) ->
                 # Train with 0%-50%, test on 50%-75%
                 X_train, X_remaining, y_train, y_remaining = train_test_split(predictors, labels, test_size=0.5,
                                                                               shuffle=False)
-                X_test, _, y_test, _ = train_test_split(X_remaining, y_remaining, test_size=5, shuffle=False)
+                X_test, _, y_test, _ = train_test_split(X_remaining, y_remaining, test_size=0.5, shuffle=False)
                 model = LSTMModel(time_step=time_step)
                 model.build_and_train_model(X_train, y_train, epochs=epochs, hidden_layers=hidden_layers)
                 accuracy_sum += model.evaluate_accuracy(X_test, y_test)
