@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-__all__ = ["rolling_volatility", "sma", "ema", "macd", "rsi", "atr"]
+__all__ = ["rolling_volatility", "sma", "ema", "typical_price", "macd", "rsi", "atr", "cci", "bb", "roc"]
 
 
 def rolling_volatility(price: pd.Series, lookback: int = 22):
@@ -31,6 +31,13 @@ def ema(price: pd.Series, periods: int) -> pd.Series:
     weights = weights / weights.sum()
 
     return price.rolling(window=periods).apply(lambda s: np.dot(s, weights))
+
+
+def typical_price(close: pd.Series, high: pd.Series, low: pd.Series) -> pd.Series:
+    """
+    Given a series of an asset's close, high, and low data, calculates the typical price series.
+    """
+    return (close + high + low) / 3
 
 
 def macd(price: pd.Series, slow_periods: int = 26, fast_periods: int = 12) -> pd.Series:
@@ -97,3 +104,42 @@ def atr(close: pd.Series, high: pd.Series, low: pd.Series, periods: int = 14) ->
 
     average_true_range.name = "ATR"
     return average_true_range
+
+
+def cci(close: pd.Series, high: pd.Series, low: pd.Series, periods: int = 20) -> pd.Series:
+    """
+    Given a series of an asset's close, high, and low data, calculates the commodity channel index series.
+    """
+    tp = typical_price(close=close, high=high, low=low)
+    moving_average = sma(tp, periods=periods)
+    mean_deviation = (tp - moving_average).abs().rolling(window=periods).mean()
+    commodity_channel_index = (tp - moving_average) / mean_deviation.multiply(0.015)
+
+    commodity_channel_index.name = "CCI"
+    return commodity_channel_index
+
+
+def bb(close: pd.Series, high: pd.Series, low: pd.Series, upper: bool, periods: int = 20, number_of_sds: float = 2) \
+        -> pd.Series:
+    """
+    Given a series of an asset's close, high, and low data, calculates the bollinger bands series.
+    """
+    tp = typical_price(close=close, high=high, low=low)
+    moving_average = sma(tp, periods=periods)
+    moving_sd = tp.rolling(window=periods).std(ddof=1)
+
+    if upper:
+        band = moving_average + moving_sd.multiply(number_of_sds)
+        band.name = "BB UPPER"
+    else:
+        band = moving_average - moving_sd.multiply(number_of_sds)
+        band.name = "BB LOWER"
+
+    return band
+
+
+def roc(price: pd.Series, periods: int) -> pd.Series:
+    """
+    Given a series of price data, calculates the rate of change series.
+    """
+    return price.pct_change(periods=periods)

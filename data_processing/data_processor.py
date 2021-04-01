@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from data_processing.indicators import rolling_volatility, sma, ema, macd, rsi, atr
+from data_processing.indicators import rolling_volatility, sma, ema, typical_price, macd, rsi, atr, cci, bb, roc
 
 __all__ = ["DataProcessor"]
 
@@ -14,7 +14,7 @@ class DataProcessor:
         """
         missing = [col for col in ["OPEN", "HIGH", "LOW", "CLOSE", "VOL"] if col not in data.columns]
         assert len(missing) == 0, f"{missing} columns not found in input futures price data."
-        self.data = data
+        self.data = data.sort_index(ascending=True)
 
     def build_predictors_and_labels(self) -> pd.DataFrame:
         """
@@ -109,6 +109,29 @@ class DataProcessor:
 
     def add_sma(self, periods: int):
         self.data[f"{periods}-PERIOD SMA"] = sma(self.data["CLOSE"], periods=periods)
+        return self
+
+    def add_typical_price(self):
+        self.data["TYPICAL PRICE"] = typical_price(close=self.data["CLOSE"], high=self.data["HIGH"],
+                                                   low=self.data["LOW"])
+        return self
+
+    def add_cci(self, periods: int = 20):
+        self.data["CCI"] = cci(close=self.data["CLOSE"], high=self.data["HIGH"], low=self.data["LOW"], periods=periods)
+        return self
+
+    def add_bb_upper(self, periods: int = 20, number_of_sds: float = 2):
+        self.data["BB UPPER"] = bb(close=self.data["CLOSE"], high=self.data["HIGH"], low=self.data["LOW"],
+                                   upper=True, periods=periods, number_of_sds=number_of_sds)
+        return self
+
+    def add_bb_lower(self, periods: int = 20, number_of_sds: float = 2):
+        self.data["BB LOWER"] = bb(close=self.data["CLOSE"], high=self.data["HIGH"], low=self.data["LOW"],
+                                   upper=False, periods=periods, number_of_sds=number_of_sds)
+        return self
+
+    def add_roc(self, periods: int):
+        self.data[f"{periods}-PERIOD ROC"] = roc(price=self.data["CLOSE"], periods=periods)
         return self
 
     def get_data(self):
