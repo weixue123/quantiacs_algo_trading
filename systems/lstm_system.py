@@ -3,7 +3,7 @@ from typing import List, Tuple
 import numpy as np
 
 from data_processing.data_processor import DataProcessor
-from models.lstm.training_util import load_model
+from models.lstm.training_util import load_lstm_model
 from systems.systems_util import get_futures_list, get_settings, normalize_weights, build_ohclv_dataframe
 
 
@@ -38,7 +38,7 @@ def mySettings():
     settings = get_settings()
     futures_list = get_futures_list(filter_insignificant_lag_1_acf=True)
     settings["markets"] = ["CASH", *futures_list]
-    settings["models"] = {ticker: load_model(ticker) for ticker in futures_list}
+    settings["models"] = {ticker: load_lstm_model(ticker) for ticker in futures_list}
     return settings
 
 

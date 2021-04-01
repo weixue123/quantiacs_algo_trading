@@ -9,8 +9,8 @@ from sklearn.model_selection import train_test_split
 from models.lstm.lstm_model import LSTMModel
 from utils.data_loader import load_processed_data
 
-__all__ = ["get_training_data", "get_cross_validation_results", "build_optimized_model", "save_model", "load_model",
-           "is_model_trained_and_saved"]
+__all__ = ["get_training_data", "get_cross_validation_results", "build_optimized_model", "save_model",
+           "load_lstm_model", "is_model_trained_and_saved"]
 
 
 def get_training_data(ticker: str) -> Tuple[pd.DataFrame, pd.Series]:
@@ -110,11 +110,11 @@ def save_model(ticker: str, model: LSTMModel):
     pickle_out.close()
 
 
-def load_model(ticker: str) -> LSTMModel:
+def load_lstm_model(ticker: str) -> LSTMModel:
     """
     Helper function to load a trained model previously saved as a pickle.
     """
-    print(f"Loading model for {ticker}")
+    print(f"Loading LSTM model for {ticker}")
     storage_dir = Path(os.path.dirname(__file__)) / "serialized_models"
     pickle_in = open(f"{storage_dir}/{ticker}.pickle", "rb")
     model: LSTMModel = pickle.load(pickle_in)
@@ -125,7 +125,7 @@ def load_model(ticker: str) -> LSTMModel:
 def is_model_trained_and_saved(ticker: str) -> bool:
     storage_dir = Path(os.path.dirname(__file__)) / "serialized_models"
     if os.path.exists(storage_dir / f"{ticker}.pickle"):
-        model = load_model(ticker)
+        model = load_lstm_model(ticker)
         return model.is_trained()
 
     return False
