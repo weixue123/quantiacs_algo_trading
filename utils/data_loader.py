@@ -21,7 +21,7 @@ def load_raw_data(ticker: str):
     data.index = pd.to_datetime(data.index, format="%Y%m%d")
 
     data = data[["OPEN", "HIGH", "LOW", "CLOSE", "VOL"]]
-    data = data.sort_index(ascending=False)
+    data = data.sort_index(ascending=True)
 
     return data
 
@@ -48,5 +48,5 @@ def load_processed_data(ticker: str):
         raw_data = load_raw_data(ticker)
         processed_data = DataProcessor(data=raw_data).build_predictors_and_labels()
         processed_data.to_csv(project_root_path / f"systems/tickerDataProcessed/{ticker}.csv")
-        processed_data = processed_data.sort_index(ascending=False)
+        processed_data = processed_data.sort_index(ascending=True)
         return processed_data
