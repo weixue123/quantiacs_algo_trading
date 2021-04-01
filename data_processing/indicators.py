@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-__all__ = ["rolling_volatility", "ema", "macd", "rsi", "atr"]
+__all__ = ["rolling_volatility", "sma", "ema", "macd", "rsi", "atr"]
 
 
 def rolling_volatility(price: pd.Series, lookback: int = 22):
@@ -9,6 +9,13 @@ def rolling_volatility(price: pd.Series, lookback: int = 22):
     Given a series of price data, calculates the rolling daily volatility series.
     """
     return price.pct_change().rolling(lookback).std(ddof=1)
+
+
+def sma(price: pd.Series, periods: int) -> pd.Series:
+    """
+    Given a series of price data, calculates the simple moving average series.
+    """
+    return price.rolling(window=periods).apply(lambda s: s.mean())
 
 
 def ema(price: pd.Series, periods: int) -> pd.Series:

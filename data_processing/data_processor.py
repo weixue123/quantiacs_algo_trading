@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from data_processing.indicators import rolling_volatility, macd, rsi, atr
+from data_processing.indicators import rolling_volatility, sma, ema, macd, rsi, atr
 
 __all__ = ["DataProcessor"]
 
@@ -19,6 +19,7 @@ class DataProcessor:
     def build_predictors_and_labels(self) -> pd.DataFrame:
         """
         Returns a complete dataframe with predictors and labels.
+        This is the standardized feature set for all ML models.
         """
         return (self
                 .add_macd()
@@ -35,6 +36,7 @@ class DataProcessor:
     def build_predictors(self) -> pd.DataFrame:
         """
         Returns a dataframe with predictors only.
+        This is the standardized feature set for all ML models.
         """
         return (self
                 .add_macd()
@@ -99,6 +101,14 @@ class DataProcessor:
 
     def add_lag_close(self, lag: int):
         self.data[f"LAG {lag} CLOSE"] = self.data["CLOSE"].shift(lag)
+        return self
+
+    def add_ema(self, periods: int):
+        self.data[f"{periods}-PERIOD EMA"] = ema(self.data["CLOSE"], periods=periods)
+        return self
+
+    def add_sma(self, periods: int):
+        self.data[f"{periods}-PERIOD SMA"] = sma(self.data["CLOSE"], periods=periods)
         return self
 
     def get_data(self):
