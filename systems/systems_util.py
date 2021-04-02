@@ -16,7 +16,12 @@ def get_futures_list(filter_insignificant_lag_1_acf: bool = False) -> List[str]:
     """
     if filter_insignificant_lag_1_acf:
         # Determined with prior research
-        return ['F_ED', 'F_ES', 'F_NQ', 'F_O', 'F_SB', 'F_LX', 'F_SS', 'F_VX', 'F_LU', 'F_LQ', 'F_RF', 'F_EB', 'F_F']
+        # return ['F_ED', 'F_ES', 'F_NQ', 'F_O', 'F_SB', 'F_LX', 'F_SS', 'F_VX', 'F_LU', 'F_LQ', 'F_RF', 'F_EB', 'F_F']
+        return ['F_AD', 'F_C', 'F_DX', 'F_ED', 'F_ES', 'F_FC', 'F_HG', 'F_LB', 'F_LC', 'F_MD', 'F_NG', 'F_NQ',
+                'F_NR', 'F_O', 'F_PA', 'F_PL', 'F_RB', 'F_RU', 'F_SB', 'F_TU', 'F_XX', 'F_YM', 'F_AX', 'F_CA',
+                'F_UB', 'F_LX', 'F_SS', 'F_DL', 'F_ZQ', 'F_VX', 'F_BG', 'F_LU', 'F_AH', 'F_DZ', 'F_FL', 'F_FM',
+                'F_FY', 'F_GX', 'F_HP', 'F_LR', 'F_LQ', 'F_NY', 'F_RF', 'F_SH', 'F_SX', 'F_EB', 'F_VW', 'F_GD',
+                'F_F']
     else:
         return ['F_AD', 'F_BO', 'F_BP', 'F_C', 'F_CC', 'F_CD', 'F_CL', 'F_CT', 'F_DX', 'F_EC', 'F_ED', 'F_ES', 'F_FC',
                 'F_FV', 'F_GC', 'F_HG', 'F_HO', 'F_JY', 'F_KC', 'F_LB', 'F_LC', 'F_LN', 'F_MD', 'F_MP', 'F_NG', 'F_NQ',

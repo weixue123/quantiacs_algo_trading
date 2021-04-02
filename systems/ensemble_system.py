@@ -19,13 +19,12 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, VOL, settings) -> Tuple[np.nda
     """
     current_date: pd.Timestamp = pd.to_datetime(DATE[-1], format="%Y%m%d")
     positions = []
-    weight_for_single_asset = 1 / len(settings["markets"])
 
     print(f"Testing: {current_date.strftime('%Y-%m-%d')}")
 
     for index, ticker in enumerate(settings["markets"]):
         if ticker == "CASH":
-            positions.append(1)
+            positions.append(0)
             continue
 
         print(f"Predicting for: {ticker}")
@@ -36,24 +35,22 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, VOL, settings) -> Tuple[np.nda
 
         # LSTM prediction
         lstm_model = settings["lstm_models"][ticker]
-        lstm_prediction = get_lstm_prediction(model=lstm_model, predictors=predictors, current_date=current_date, allow_short=False)
+        lstm_prediction = get_lstm_prediction(model=lstm_model, predictors=predictors, current_date=current_date)
 
         # XGBoost prediction
         xgb_model = settings["xgb_models"][ticker]
-        xgb_prediction = get_xgb_prediction(model=xgb_model, predictors=predictors, current_date=current_date, allow_short=False)
+        xgb_prediction = get_xgb_prediction(model=xgb_model, predictors=predictors, current_date=current_date)
 
         # ARIMA prediction
         arima_order = settings["arima_params"][ticker]
-        arima_prediction = get_arima_prediction(price_data=CLOSE[:, index], order=arima_order, allow_short=False)
+        arima_prediction = get_arima_prediction(price_data=CLOSE[:, index], order=arima_order)
 
         # Ensemble the predictions
         combined_prediction = lstm_prediction + xgb_prediction + arima_prediction
-        if combined_prediction >= 1:
-            positions.append(weight_for_single_asset)
-            positions[0] = positions[0] - weight_for_single_asset
-        elif combined_prediction <= -1:
-            positions.append(-1 * weight_for_single_asset)
-            positions[0] = positions[0] - weight_for_single_asset
+        if combined_prediction >= 2:
+            positions.append(1)
+        elif combined_prediction <= -2:
+            positions.append(-1)
         else:
             positions.append(0)
 
