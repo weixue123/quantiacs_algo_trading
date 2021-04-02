@@ -10,8 +10,7 @@ from models.lstm.training_util import load_lstm_model
 from systems.systems_util import get_futures_list, get_settings, normalize_weights, build_ohclv_dataframe
 
 
-def myTradingSystem(DATE: List[int], OPEN: np.ndarray, HIGH: np.ndarray, LOW: np.ndarray, CLOSE: np.ndarray,
-                    VOL: np.ndarray, settings) -> Tuple[np.ndarray, dict]:
+def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, VOL, settings) -> Tuple[np.ndarray, dict]:
     """
     Trading system that uses the LSTM model to predict change in price.
     """

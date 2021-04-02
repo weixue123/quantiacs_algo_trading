@@ -1,21 +1,22 @@
-from typing import List, Tuple
+from typing import Tuple
 
 import numpy as np
+import pandas as pd
 
 from data_processing.data_processor import DataProcessor
 from models.lstm.training_util import load_lstm_model
 from systems.systems_util import get_futures_list, get_settings, normalize_weights, build_ohclv_dataframe
 
 
-def myTradingSystem(DATE: List[int], OPEN: np.ndarray, HIGH: np.ndarray, LOW: np.ndarray, CLOSE: np.ndarray,
-                    VOL: np.ndarray, settings) -> Tuple[np.ndarray, dict]:
+def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, VOL, settings) -> Tuple[np.ndarray, dict]:
     """
     Trading system that uses the LSTM model to predict change in price.
     """
 
-    print(f"Date: {DATE[-1]}")
+    current_date: pd.Timestamp = pd.to_datetime(DATE[-1], format="%Y%m%d")
+    positions = []
 
-    positions: List[int] = []
+    print(f"Testing: {current_date.strftime('%Y-%m-%d')}")
 
     for index, ticker in enumerate(settings["markets"]):
         if ticker == "CASH":
@@ -26,6 +27,12 @@ def myTradingSystem(DATE: List[int], OPEN: np.ndarray, HIGH: np.ndarray, LOW: np
         ohclv_data = build_ohclv_dataframe(DATE, OPEN, HIGH, LOW, CLOSE, VOL, index)
         predictors = DataProcessor(data=ohclv_data).build_predictors()
         model = settings["models"][ticker]
+
+        # On some days, data might not be available
+        if predictors.index[-1] != current_date:
+            positions.append(0)
+            continue
+
         prediction = model.predict_last(predictors=predictors)
         positions.append(prediction)
 
@@ -37,6 +44,7 @@ def myTradingSystem(DATE: List[int], OPEN: np.ndarray, HIGH: np.ndarray, LOW: np
 def mySettings():
     settings = get_settings()
     futures_list = get_futures_list(filter_insignificant_lag_1_acf=True)
+    futures_list = ["F_ES"]
     settings["markets"] = ["CASH", *futures_list]
     settings["models"] = {ticker: load_lstm_model(ticker) for ticker in futures_list}
     return settings
