@@ -1,18 +1,22 @@
-import json
 from typing import Tuple
 
 import numpy as np
 import pandas as pd
 from statsmodels.tsa.arima.model import ARIMA
 
+from models.arima.util import load_arima_parameters
 from systems_util import get_futures_list, get_settings, normalize_weights
 
 
 def myTradingSystem(DATE, CLOSE, settings) -> Tuple[np.ndarray, dict]:
-    print(f"Predicting for: {DATE[-1]}")
-    CLOSE = np.transpose(CLOSE)
+    """
+    Trading system that uses the ARIMA model to predict changes in price.
+    """
 
+    current_date: pd.Timestamp = pd.to_datetime(DATE[-1], format="%Y%m%d")
     positions = []
+
+    print(f"Testing: {current_date.strftime('%Y-%m-%d')}")
 
     for index, ticker in enumerate(settings["markets"]):
         if ticker == "CASH":
@@ -21,20 +25,15 @@ def myTradingSystem(DATE, CLOSE, settings) -> Tuple[np.ndarray, dict]:
 
         print(f"Predicting for: {ticker}")
 
-        params_dir = f"../models/arima/params/{ticker}_params.txt"
-        ticker_returns = CLOSE[index]
-        volatility = pd.Series(ticker_returns).pct_change().std()
-
-        with open(params_dir) as f:
-            params = json.load(f)
-        p = params['p']
-        q = params['q']
-        d = params['d']
-        model = ARIMA(ticker_returns, order=(p, d, q))
+        price_data = CLOSE[:, index]
+        volatility = pd.Series(price_data).pct_change().std()
+        params = settings["params"][ticker]
+        model = ARIMA(price_data, order=params)
         model_fit = model.fit()
         forecast = model_fit.forecast()
 
-        forecasted_returns = ((forecast - ticker_returns[-1]) / ticker_returns[-1])[0]
+        forecasted_returns = ((forecast - price_data[-1]) / price_data[-1])[0]
+
         if forecasted_returns > 0.1 * volatility:
             positions.append(1)
         elif forecasted_returns < -0.1 * volatility:
@@ -48,8 +47,9 @@ def myTradingSystem(DATE, CLOSE, settings) -> Tuple[np.ndarray, dict]:
 
 def mySettings():
     settings = get_settings()
-    futures = get_futures_list(filter_insignificant_lag_1_acf=True)
-    settings["markets"] = ["CASH", *futures]
+    futures_list = get_futures_list(filter_insignificant_lag_1_acf=True)
+    settings["markets"] = ["CASH", *futures_list]
+    settings["params"] = {ticker: load_arima_parameters(ticker) for ticker in futures_list}
     return settings
 
 

@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
@@ -7,17 +7,18 @@ from statsmodels.tsa.arima.model import ARIMA
 from data_processing.data_processor import DataProcessor
 from models.arima.util import load_arima_parameters
 from models.lstm.training_util import load_lstm_model
+from models.xgboost.training_util import load_xgb_model
 from systems.systems_util import get_futures_list, get_settings, normalize_weights, build_ohclv_dataframe
 
 
 def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, VOL, settings) -> Tuple[np.ndarray, dict]:
     """
-    Trading system that uses the LSTM model to predict change in price.
+    Trading system that ensembles the ARIMA, LSTM and XGBoost model to predict changes in price.
     """
+    current_date: pd.Timestamp = pd.to_datetime(DATE[-1], format="%Y%m%d")
+    positions = []
 
-    print(f"Date: {DATE[-1]}")
-
-    positions: List[int] = []
+    print(f"Testing: {current_date.strftime('%Y-%m-%d')}")
 
     for index, ticker in enumerate(settings["markets"]):
         if ticker == "CASH":
@@ -26,11 +27,27 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, VOL, settings) -> Tuple[np.nda
 
         print(f"Predicting for: {ticker}")
 
-        # LSTM Prediction
+        # Data Preparation
         ohclv_data = build_ohclv_dataframe(DATE, OPEN, HIGH, LOW, CLOSE, VOL, index)
         predictors = DataProcessor(data=ohclv_data).build_predictors()
+
+        # LSTM Prediction
         lstm_model = settings["lstm_models"][ticker]
-        lstm_prediction = lstm_model.predict_last(predictors=predictors)
+        # On some days, data might not be available
+        if len(predictors) >= lstm_model.time_step:
+            if predictors.index[-1] == current_date:
+                lstm_prediction = lstm_model.predict_last(predictors=predictors)
+        else:
+            lstm_prediction = 0
+
+        # XGBoost Prediction
+        xgb_model = settings["xgb_models"][ticker]
+        predictors_last = predictors.loc[current_date:]
+        # On some days, data might not be available
+        if len(predictors_last) == 0:
+            xgb_prediction = 0
+        else:
+            xgb_prediction = int(xgb_model.predict(predictors_last.to_numpy())[0])
 
         # ARIMA Prediction
         price_data = CLOSE[:, index]
@@ -47,7 +64,7 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, VOL, settings) -> Tuple[np.nda
             arima_prediction = 0
 
         # Ensemble the predictions
-        combined_prediction = lstm_prediction + arima_prediction
+        combined_prediction = lstm_prediction + xgb_prediction + arima_prediction
         if combined_prediction >= 1:
             positions.append(1)
         elif combined_prediction <= -1:
@@ -69,6 +86,9 @@ def mySettings():
 
     # Load LSTM models
     settings["lstm_models"] = {ticker: load_lstm_model(ticker) for ticker in futures_list}
+
+    # Load XGBoost models
+    settings["xgb_models"] = {ticker: load_xgb_model(ticker) for ticker in futures_list}
 
     # Load ARIMA parameters
     settings["arima_params"] = {ticker: load_arima_parameters(ticker) for ticker in futures_list}

@@ -1,3 +1,5 @@
+from pathlib import Path
+import os
 import pickle
 import warnings
 
@@ -7,6 +9,8 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from xgboost import XGBClassifier
 
 warnings.filterwarnings("ignore")
+
+__all__ = ["train_model", "load_xgb_model"]
 
 
 def hyperopt(param_space, X_train, y_train, X_test, y_test, num_eval, classifier, cross_val):
@@ -69,3 +73,13 @@ def train_model(data, param_space, cross_val, ticker):
     xgboost_model.fit(X_train, y_train, verbose=False, eval_metric='mlogloss')
     pickle.dump(xgboost_model, open(f"./models/xgboost/trained_xgboost_models/{ticker}.pkl", "wb"))
     print(f"Successfully trained XGBoost model for {ticker}")  # debug
+
+
+def load_xgb_model(ticker: str) -> XGBClassifier:
+    """
+    Helper function to load a trained model previously saved as a pickle.
+    """
+    print(f"Loading XGBoost Model for {ticker}")
+    storage_dir = (Path(os.path.dirname(__file__)) / "trained_xgboost_models")
+    pickle_in = open(f"{storage_dir}/{ticker}.pkl", "rb")
+    return pickle.load(pickle_in)
