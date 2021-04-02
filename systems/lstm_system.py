@@ -10,14 +10,11 @@ from systems.systems_util import get_futures_list, get_settings, normalize_weigh
 
 def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, VOL, settings) -> Tuple[np.ndarray, dict]:
     """
-    Trading system that uses the LSTM model to predict change in price.
+    Trading system that uses the LSTM model to predict changes in price.
     """
 
     current_date: pd.Timestamp = pd.to_datetime(DATE[-1], format="%Y%m%d")
     positions = []
-
-    num_markets = len(settings["markets"])
-    weight_for_single_asset = 1 / num_markets
 
     print(f"Testing: {current_date.strftime('%Y-%m-%d')}")
 
@@ -36,15 +33,10 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, VOL, settings) -> Tuple[np.nda
             positions.append(0)
         elif predictors.index[-1] != current_date:
             positions.append(0)
-
         else:
             prediction = model.predict_last(predictors=predictors)
-            prediction = prediction if prediction == 1 else 0
-            positions.append(prediction * weight_for_single_asset)
-            if prediction != 0:
-                positions[0] = positions[0] - weight_for_single_asset
+            positions.append(prediction)
 
-    print(positions)
     weights = normalize_weights(weights=positions)
 
     return weights, settings

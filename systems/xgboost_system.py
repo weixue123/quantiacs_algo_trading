@@ -12,13 +12,12 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, VOL, settings):
 
     current_date = pd.to_datetime(DATE[-1], format="%Y%m%d")
     positions = []
-    weight_for_single_asset = 1 / len(settings["markets"])
 
     print(f"Testing: {current_date.strftime('%Y-%m-%d')}")
 
     for index, ticker in enumerate(settings["markets"]):
         if ticker == "CASH":
-            positions.append(1)
+            positions.append(0)
             continue
 
         print(f"Predicting for: {ticker}")
@@ -34,10 +33,7 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, VOL, settings):
 
         xgb_model = settings["xgb_models"][ticker]
         xgb_prediction = int(xgb_model.predict(predictors_last.to_numpy())[0])
-        xgb_prediction = max(xgb_prediction, 0)
-        positions.append(xgb_prediction * weight_for_single_asset)
-        if xgb_prediction != 0:
-            positions[0] = positions[0] - weight_for_single_asset
+        positions.append(xgb_prediction)
 
     weights = normalize_weights(positions)
 
