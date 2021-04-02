@@ -16,11 +16,14 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, VOL, settings) -> Tuple[np.nda
     current_date: pd.Timestamp = pd.to_datetime(DATE[-1], format="%Y%m%d")
     positions = []
 
+    num_markets = len(settings["markets"])
+    weight_for_single_asset = 1 / num_markets
+
     print(f"Testing: {current_date.strftime('%Y-%m-%d')}")
 
     for index, ticker in enumerate(settings["markets"]):
         if ticker == "CASH":
-            positions.append(0)
+            positions.append(1)
             continue
 
         print(f"Predicting for: {ticker}")
@@ -29,13 +32,19 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, VOL, settings) -> Tuple[np.nda
         model = settings["models"][ticker]
 
         # On some days, data might not be available
-        if predictors.index[-1] != current_date:
+        if len(predictors) < model.time_step:
             positions.append(0)
-            continue
+        elif predictors.index[-1] != current_date:
+            positions.append(0)
 
-        prediction = model.predict_last(predictors=predictors)
-        positions.append(prediction)
+        else:
+            prediction = model.predict_last(predictors=predictors)
+            prediction = prediction if prediction == 1 else 0
+            positions.append(prediction * weight_for_single_asset)
+            if prediction != 0:
+                positions[0] = positions[0] - weight_for_single_asset
 
+    print(positions)
     weights = normalize_weights(weights=positions)
 
     return weights, settings
@@ -44,7 +53,6 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, VOL, settings) -> Tuple[np.nda
 def mySettings():
     settings = get_settings()
     futures_list = get_futures_list(filter_insignificant_lag_1_acf=True)
-    futures_list = ["F_ES"]
     settings["markets"] = ["CASH", *futures_list]
     settings["models"] = {ticker: load_lstm_model(ticker) for ticker in futures_list}
     return settings
