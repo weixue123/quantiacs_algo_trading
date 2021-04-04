@@ -47,7 +47,6 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, VOL, settings) -> Tuple[np.nda
 
         # Ensemble the predictions
         combined_prediction = lstm_prediction + xgb_prediction + arima_prediction
-        print(combined_prediction)
         if combined_prediction >= 2:
             positions.append(1)
         elif combined_prediction <= -2:
