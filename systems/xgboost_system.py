@@ -42,7 +42,7 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, VOL, settings):
 
 def mySettings():
     settings = get_settings()
-    futures_list = get_futures_list(filter_insignificant_lag_1_acf=True)
+    futures_list = get_futures_list(filter_insignificant_lag=2)
     settings["markets"] = ["CASH", *futures_list]
     settings["xgb_models"] = {ticker: load_xgb_model(ticker) for ticker in futures_list}
     return settings

@@ -44,7 +44,7 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, VOL, settings) -> Tuple[np.nda
 
 def mySettings():
     settings = get_settings()
-    futures_list = get_futures_list(filter_insignificant_lag_1_acf=True)
+    futures_list = get_futures_list(filter_insignificant_lag=2)
     settings["markets"] = ["CASH", *futures_list]
     settings["models"] = {ticker: load_lstm_model(ticker) for ticker in futures_list}
     return settings

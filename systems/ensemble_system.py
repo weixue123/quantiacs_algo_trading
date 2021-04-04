@@ -47,6 +47,7 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, VOL, settings) -> Tuple[np.nda
 
         # Ensemble the predictions
         combined_prediction = lstm_prediction + xgb_prediction + arima_prediction
+        print(combined_prediction)
         if combined_prediction >= 2:
             positions.append(1)
         elif combined_prediction <= -2:
@@ -63,7 +64,7 @@ def mySettings():
     settings = get_settings()
 
     # Set futures to trade
-    futures_list = get_futures_list(filter_insignificant_lag_1_acf=True)
+    futures_list = get_futures_list(filter_insignificant_lag=2)
     settings["markets"] = ["CASH", *futures_list]
 
     # Load LSTM models
