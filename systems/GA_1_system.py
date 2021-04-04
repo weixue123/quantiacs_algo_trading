@@ -21,7 +21,7 @@ def myTradingSystem(DATE, OPEN, HIGH, LOW, CLOSE, VOL, exposure, equity, setting
         profit = [CLOSE[-1,market]-CLOSE[-2,market] for market in range(nMarkets)]
 
         # fitness function is total portfolio value after taking the value
-        diff = np.nansum([-market*pos for market,pos in zip(profit, gen)])
+        diff = np.nansum([market*pos for market,pos in zip(profit, gen)])
         
         return diff 
         
