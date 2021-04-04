@@ -15,7 +15,7 @@ def train_and_save_model(ticker: str) -> None:
 
 
 def execute():
-    for ticker in get_futures_list(filter_insignificant_lag_1_acf=True):
+    for ticker in get_futures_list(filter_insignificant_lag=1):
         if not is_model_trained_and_saved(ticker=ticker):
             train_and_save_model(ticker=ticker)
         else:

@@ -24,7 +24,7 @@ XGB_param_hyperopt = {
     "reg_alpha": hp.uniform("reg_alpha", 0, 0.02),
 }
 
-futures = get_futures_list(filter_insignificant_lag_1_acf=True)
+futures = get_futures_list(filter_insignificant_lag=1)
 
 # Pre-train models and save the weights
 for ticker in futures:

@@ -1,17 +1,15 @@
-from utils.data_loader import load_processed_data
-from systems.systems_util import get_futures_list
 from models.lgbm.training_util import split, train_model
+from systems.systems_util import get_futures_list
+from utils.data_loader import load_processed_data
 
-FUTURES_LIST = get_futures_list(filter_insignificant_lag_1_acf=True)
+FUTURES_LIST = get_futures_list(filter_insignificant_lag=2)
 
 params = {'num_threads': 4,
           'num_class': 3,
           'objective': 'multiclassova',
           'seed': 123,
           'tree_learner': 'feature',
-          'is_unbalance': True,
-
-          }
+          'is_unbalance': True}
 
 # tune these
 params['learning_rate'] = 0.03
@@ -28,12 +26,14 @@ params['max_bin'] = 500
 params['num_boost_round'] = 175
 params['early_stopping_rounds'] = 30
 
+
 def train(ticker):
     data = load_processed_data(ticker)
     data = data.loc[:"2020-12-31"]
     data = data.iloc[:-1]
     X_train, X_test, y_train, y_test = split(data)
     model = train_model(X_train, X_test, y_train, y_test, params)
-    return model 
+    return model
+
 
 train(FUTURES_LIST[0])

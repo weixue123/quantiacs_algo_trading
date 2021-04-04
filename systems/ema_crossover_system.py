@@ -9,7 +9,7 @@ from systems.systems_util import get_futures_list, get_settings, normalize_weigh
 def myTradingSystem(DATE: List[int], OPEN: np.ndarray, HIGH: np.ndarray, LOW: np.ndarray, CLOSE: np.ndarray,
                     VOL: np.ndarray, settings) -> Tuple[np.ndarray, dict]:
     """
-    Trading system that uses the simple moving average crossover strategy to predict future trends.
+    Trading system that uses the exponential moving average crossover strategy to predict future trends.
     """
 
     print(f"Date: {DATE[-1]}")
