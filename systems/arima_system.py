@@ -47,7 +47,7 @@ def myTradingSystem(DATE, CLOSE, settings) -> Tuple[np.ndarray, dict]:
 
 def mySettings():
     settings = get_settings()
-    futures_list = get_futures_list(filter_insignificant_lag_1_acf=True)
+    futures_list = get_futures_list(filter_insignificant_lag=2)
     settings["markets"] = ["CASH", *futures_list]
     settings["params"] = {ticker: load_arima_parameters(ticker) for ticker in futures_list}
     return settings

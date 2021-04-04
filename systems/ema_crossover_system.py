@@ -21,24 +21,28 @@ def myTradingSystem(DATE: List[int], OPEN: np.ndarray, HIGH: np.ndarray, LOW: np
             positions.append(0)
             continue
 
-        fast_periods = 5
-        slow_periods = 15
+        fast_periods = 12
+        slow_periods = 26
 
         print(f"Predicting for: {ticker}")
         ohclv_data = build_ohclv_dataframe(DATE, OPEN, HIGH, LOW, CLOSE, VOL, index)
         predictors = (DataProcessor(data=ohclv_data)
-                      .add_sma(periods=fast_periods)
-                      .add_sma(periods=slow_periods)
+                      .add_ema(periods=fast_periods)
+                      .add_ema(periods=slow_periods)
                       .get_data())
 
-        fast_sma = predictors[f"{fast_periods}-PERIOD SMA"].iloc[-1]
-        slow_sma = predictors[f"{slow_periods}-PERIOD SMA"].iloc[-1]
-        fast_sma_is_increasing = ((predictors[f"{fast_periods}-PERIOD SMA"].iloc[-1]
-                                   - predictors[f"{fast_periods}-PERIOD SMA"].iloc[-2])) > 0
+        fast_ema = predictors[f"{fast_periods}-PERIOD EMA"].iloc[-1]
+        slow_ema = predictors[f"{slow_periods}-PERIOD EMA"].iloc[-1]
+        fast_ema_is_increasing = ((predictors[f"{fast_periods}-PERIOD EMA"].iloc[-1]
+                                   - predictors[f"{fast_periods}-PERIOD EMA"].iloc[-2])) > 0
 
-        # Fast SMA crosses above slow SMA and fast SMA appears to be increasing - buy signal
-        if fast_sma > slow_sma and fast_sma_is_increasing:
+        # Fast EMA crosses above slow SMA and fast EMA appears to be increasing - buy signal
+        if fast_ema > slow_ema and fast_ema_is_increasing:
             positions.append(1)
+
+        # Fast EMA crosses below slow SMA and fast EMA appears to be decreasing - sell signal
+        elif slow_ema > fast_ema and not fast_ema_is_increasing:
+            positions.append(-1)
 
         else:
             positions.append(0)
@@ -50,7 +54,7 @@ def myTradingSystem(DATE: List[int], OPEN: np.ndarray, HIGH: np.ndarray, LOW: np
 
 def mySettings():
     settings = get_settings()
-    futures_list = get_futures_list()
+    futures_list = get_futures_list(filter_insignificant_lag=2)
     settings["markets"] = ["CASH", *futures_list]
     return settings
 

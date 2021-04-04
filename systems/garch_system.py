@@ -1,11 +1,10 @@
-import os
-import pickle
 import json
+import os
 from pathlib import Path
-from arch import arch_model
 from typing import List, Tuple
 
 import numpy as np
+from arch import arch_model
 
 from systems_util import get_futures_list, get_settings, normalize_weights
 
@@ -73,7 +72,7 @@ def myTradingSystem(DATE: List[int], CLOSE: np.ndarray, settings) -> Tuple[np.nd
 
 def mySettings():
     settings = get_settings()
-    futures = get_futures_list(filter_insignificant_lag_1_acf=True)
+    futures = get_futures_list(filter_insignificant_lag=2)
     futures_list = ["F_AD", "F_ES"]
     settings["markets"] = ["CASH", *futures]
     return settings
